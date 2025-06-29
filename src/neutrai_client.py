@@ -47,6 +47,21 @@ class NeutraAIClient:
         response = requests.request(method, url, headers=headers, **kwargs)
         return response.json()
 
+    def get_answered_questions(self,**kwargs):
+        token = self.get_token()
+        headers = kwargs.pop("headers", {})
+        dispute_uuid = kwargs.pop("dispute_uuid", None)
+        headers["Content-Type"] = "application/json"
+        headers["Authorization"] = f"Bearer {token}"
+        method = "GET"
+        base_url = self.config.get_required('NEUTRAI_URI')
+        url = f"{base_url}/api/dispute/{dispute_uuid}/answered"
+        response = requests.request(method, url, headers=headers, **kwargs)
+        if response.status_code != 200:
+            print(response.status_code)
+            print(response.json())
+        return response.json()
+
     def store_questions(self, **kwargs):
         token = self.get_token()
         headers = kwargs.pop("headers", {})

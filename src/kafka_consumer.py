@@ -56,8 +56,39 @@ Non includere commenti o spiegazioni nel risultato, solo JSON puro.
         questions = json.loads(choice.message.content)
         sbc.store_questions(dispute_uuid=dispute_uuid, questions=questions, owner_uuid=owner_uuid)
 
+def generate_verdict(dispute_uuid):
+    sbc = NeutraAIClient(config)
+    dispute_info = sbc.get_dispute_info(dispute_uuid=dispute_uuid)
+    answered = sbc.get_answered_questions(dispute_uuid=dispute_uuid)
+    dispute = dispute_info['dispute']
+    part_0 = dispute_info['partecipants'][0]
+    part_1 = dispute_info['partecipants'][1]
 
-#generate_questions('2ce29ccd-5447-11f0-9e95-fe1414fda368')
+    main_prompt = f"""
+Sei un mediatore esperto ed imparziale. Hai ricevuto entrambe le versioni del conflitto e le risposte a diverse domande. 
+Ora sintetizza le posizioni e dai un'opinione su chi ha agito in modo più coerente o trasparente, mantenendo un tono neutro e costruttivo.
+Però devi anche dire chi dei due ha ragione, in maniera sottile ed empatica 
+I  partecipanti alla disputa sono "{dispute['partecipants_relationship']} {part_0['name']} e {part_1['name']}". 
+{part_0['name']} ha dato come contesto iniziale il seguente: {dispute['initial_statement']}
+    """
+
+    msgs = [
+        {"role": "system", "content": main_prompt},
+    ]
+
+    for answer in answered:
+        msgs.append({"role": "user", "content": f"{answer['user_name']} ha risposto: {answer['answer']}. alla domanda: {answer['question']}"})
+
+    openai_cli = OpenAI(api_key=config.get_required('OPENAI_KEY'))
+    completion = openai_cli.chat.completions.create(
+        model="gpt-4",
+        messages=msgs
+    )
+    for choice in completion.choices:
+        print(choice.message.content)
+
+#generate_questions('075e612f-54f0-11f0-9e95-fe1414fda368')
+#generate_verdict('075e612f-54f0-11f0-9e95-fe1414fda368')
 #sys.exit()
 
 try:
