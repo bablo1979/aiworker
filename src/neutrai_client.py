@@ -57,6 +57,7 @@ class NeutraAIClient:
         base_url = self.config.get_required('NEUTRAI_URI')
         url = f"{base_url}/api/dispute/{dispute_uuid}/questions"
         data = kwargs.pop("questions", None)
+        data['owner_uuid'] = kwargs.pop("owner_uuid", None)
         response = requests.request(method, url, headers=headers, json=data, **kwargs)
         if response.status_code != 200:
             print(response.status_code)

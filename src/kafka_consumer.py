@@ -20,14 +20,12 @@ print(sys.version)
 
 
 
-async def generate_questions(dispute_uuid):
+async def generate_questions(dispute_uuid,owner_uuid):
     sbc = NeutraAIClient(config)
     dispute_info = sbc.get_dispute_info(dispute_uuid=dispute_uuid)
     dispute = dispute_info['dispute']
     part_0 = dispute_info['partecipants'][0]
     part_1 = dispute_info['partecipants'][1]
-
-    print(dispute)
 
     main_prompt = f"""
 Sei un mediatore esperto ed imparziale.
@@ -56,8 +54,7 @@ Non includere commenti o spiegazioni nel risultato, solo JSON puro.
     )
     for choice in completion.choices:
         questions = json.loads(choice.message.content)
-        print(questions)
-        sbc.store_questions(dispute_uuid=dispute_uuid, questions=questions)
+        sbc.store_questions(dispute_uuid=dispute_uuid, questions=questions, owner_uuid=owner_uuid)
 
 
 #generate_questions('2ce29ccd-5447-11f0-9e95-fe1414fda368')
@@ -94,7 +91,8 @@ try:
                     match msg['event']:
                         case 'dispute:new':
                             dispute_uuid = msg['data']['dispute_uuid']
-                            asyncio.run(generate_questions(dispute_uuid))
+                            owner_uuid = msg['data']['owner_uuid']
+                            asyncio.run(generate_questions(dispute_uuid,owner_uuid))
                         case _:
                             pass
                 except Exception as err:
