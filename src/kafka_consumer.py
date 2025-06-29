@@ -1,8 +1,6 @@
 
 import json
 import socket
-
-from docutils.parsers.rst.directives import choice
 from kafka import KafkaConsumer
 import sys
 import logging
