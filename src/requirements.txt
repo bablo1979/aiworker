@@ -1,0 +1,4 @@
+kafka-python
+dotenv
+requests
+openai

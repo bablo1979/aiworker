@@ -1,0 +1,70 @@
+
+name: CI/CD -> GitHub Aiworker Packages
+
+# 1. Attiva la Action su push su main
+on:
+  push:
+    branches:
+      - master
+# 2. Abilitiamo i permessi per scrivere sui Packages
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout del codice
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      # 2.Abilitiamo buildx per supportare multi-arch
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      # 3. Login a GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # 4. Build Docker Image
+      - name: Build and push PHP-FPM image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Docker/prod.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/aiworker:latest
+            ghcr.io/${{ github.repository }}/aiworker:${{ github.sha }}
+  rollout:
+    ## Per annullare il rollout casomai ci fossero problemi usare:
+    ## kubectl rollout undo deployment/aiworker -n saas-proj
+    if: false
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Decode and set KUBECONFIG
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Set image to latest and apply
+        run: |
+          kubectl set image deployment/aiworker \
+            aiworker=ghcr.io/${{ github.repository }}/aiworker:${{ github.sha }} \
+            -n saas-proj
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/aiworker -n saas-proj

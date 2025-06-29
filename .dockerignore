@@ -1,0 +1,8 @@
+Docker
+build.images.sh
+push.images.sh
+run.container.sh
+docker-compose.yml
+Readme.md
+.env
+.idea
