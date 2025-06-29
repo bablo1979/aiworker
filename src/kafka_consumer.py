@@ -20,7 +20,7 @@ print(sys.version)
 
 
 
-def generate_questions(dispute_uuid):
+async def generate_questions(dispute_uuid):
     sbc = NeutraAIClient(config)
     dispute_info = sbc.get_dispute_info(dispute_uuid=dispute_uuid)
     dispute = dispute_info['dispute']
@@ -94,7 +94,7 @@ try:
                     match msg['event']:
                         case 'dispute:new':
                             dispute_uuid = msg['data']['dispute_uuid']
-                            asyncio.run(start_crawl(dispute_uuid))
+                            asyncio.run(generate_questions(dispute_uuid))
                         case _:
                             pass
                 except Exception as err:

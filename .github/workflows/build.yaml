@@ -41,7 +41,7 @@ jobs:
   rollout:
     ## Per annullare il rollout casomai ci fossero problemi usare:
     ## kubectl rollout undo deployment/aiworker -n saas-proj
-    if: false
+    #if: false
     needs: build-push
     runs-on: ubuntu-latest
     steps:
